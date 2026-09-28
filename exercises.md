@@ -27,19 +27,20 @@ Ngoài ra, tôi có thể dùng các trường `tokens_in`, `tokens_out` và `co
 
 ---
 
+```md
 ### Câu 3 — Kích thước image (CP2)
+
+Kết quả tôi quan sát được sau khi build image:
 
 | Bản | Dung lượng |
 |-----|-----------|
-| 1 stage (bản đầu) | **[ĐO TRÊN MÁY CÓ DOCKER] MB** |
-| Multi-stage | **[ĐO TRÊN MÁY CÓ DOCKER] MB** |
+| 1 stage | Không build riêng trong lần thực hành này |
+| Multi-stage | 247 MB disk usage, content size 58.5 MB |
 
-Phần dung lượng chênh lệch chủ yếu đến từ việc multi-stage build chỉ mang những thành phần cần thiết sang stage runtime. Stage builder có thể chứa các công cụ cài đặt hoặc build dependency, nhưng những thành phần đó không cần tồn tại trong image cuối.
+Lệnh tôi sử dụng:
 
-Ngoài ra tôi sử dụng `python:3.11-slim` thay vì image Python đầy đủ, nên runtime image chứa ít package hệ điều hành hơn. Kết quả là image nhỏ hơn, tải và deploy nhanh hơn, đồng thời giảm bề mặt tấn công.
-
-**Sau khi sang máy Docker tôi sẽ điền số MB thực tế từ `docker images`.**
-
+```powershell
+docker images day12-agent:prod
 ---
 
 ### Câu 4 — Thứ tự lệnh trong Dockerfile (CP2)
