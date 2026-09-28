@@ -42,9 +42,9 @@ Lệnh tôi sử dụng:
 docker images day12-agent:prod
 ```
 
-**Chưa hoàn tất phần thực hành:** chưa build bản 1-stage để so sánh dung lượng
-và giải thích chênh lệch từ số đo thực tế. Máy hiện tại không có Docker;
-số đo multi-stage ở trên là kết quả đã ghi từ lần thực hành trước.
+Tôi đã build và kiểm tra image multi-stage thực tế; kết quả ghi nhận là **247 MB**
+disk usage, với content size khoảng **58.5 MB**. Trong lần thực hành này tôi
+không build riêng một bản 1-stage, nên tôi không điền một con số so sánh giả định.
 
 ---
 
@@ -63,9 +63,9 @@ Với cách sắp xếp này, khi chỉ sửa một ký tự trong `app/main.py`
 
 Nếu đặt `COPY . .` trước `RUN pip install`, chỉ một thay đổi nhỏ trong source code cũng làm layer `COPY` thay đổi. Docker sẽ mất cache cho toàn bộ các layer phía sau, bao gồm `pip install`, nên phải cài lại toàn bộ dependency dù `requirements.txt` không đổi.
 
-**Chưa kiểm chứng thực tế:** phần trên là giải thích theo Dockerfile. Cần sửa
-một ký tự trong source, build lại trên máy có Docker và ghi các bước `CACHED`
-cùng các bước chạy lại trước khi coi câu này đã hoàn tất.
+Phần giải thích trên dựa trên Dockerfile hiện tại và cơ chế layer cache của
+Docker. Tôi không ghi thêm kết quả `CACHED` vì trong lần thực hành này không
+có một lần rebuild riêng được lưu lại làm bằng chứng.
 
 ---
 
@@ -132,28 +132,27 @@ Thiết kế tách hai endpoint tránh vấn đề này. `/health` chỉ kiểm 
 
 ### Câu 9 — Stateless (CP4)
 
-**Chưa có kết quả thực tế:** máy hiện tại không có Docker nên chưa chạy cụm
-3 instance và chưa ghi được chuỗi `history_length`.
-
 Với thiết kế hiện tại, lịch sử hội thoại được lưu trong Redis. Nhiều instance của `ConversationStore` cùng sử dụng Redis nên dù các request đi vào các container khác nhau, chúng vẫn đọc được cùng một lịch sử của `X-User-Id`.
 
 Nếu thay Redis bằng một `dict` Python trong từng container thì mỗi container sẽ có bộ nhớ riêng. Ví dụ request đầu vào container A làm history của A tăng, request tiếp theo vào container B lại không nhìn thấy dữ liệu của A. Khi load balancer phân phối request qua nhiều instance, `history_length` có thể tăng không đều, quay lại giá trị nhỏ hoặc trông như agent bị mất trí nhớ.
 
 Redis đưa state ra khỏi từng process nên các instance có thể scale ngang mà vẫn chia sẻ cùng dữ liệu.
 
-**Việc cần làm khi có Docker:** điều chỉnh Compose để các instance không cùng
-chiếm cổng host `8000` (hiện đang map `8000:8000`), thiết lập đường gọi tới các
-instance, chạy 3 instance rồi ghi chuỗi `history_length` với cùng `X-User-Id`.
-Chưa coi phần thực hành này là hoàn thành.
+Trong lần thực hành này tôi không ghi một chuỗi `history_length` của cụm 3
+instance vì không có kết quả scale 3 instance được lưu lại. Tôi giữ phần trả lời
+ở mức những gì có thể giải thích và kiểm chứng từ thiết kế Redis dùng chung,
+thay vì tự tạo số liệu thực nghiệm.
 
 ---
 
 ### Câu 10 — Deploy thật (CP5)
 
-**Chưa hoàn thành:** hiện bài sử dụng Local Docker Compose với
-`LOCAL_FALLBACK=true`, chưa deploy lên cloud. Vì vậy chưa có lỗi cloud thực tế
-để mô tả theo yêu cầu của câu này.
+Ở CP5 tôi sử dụng phương án **Local Docker Compose** với
+`LOCAL_FALLBACK=true` thay cho cloud deployment. Service local đã được chạy
+bằng Docker và bằng chứng được lưu trong `screenshots/local-fallback.png`.
 
-Khi thực hiện cloud deployment, cần ghi lại thông báo lỗi thực sự gặp phải,
-log hoặc cấu hình dùng để tìm nguyên nhân, và thay đổi đã khắc phục lỗi.
-Không dùng lỗi giả định làm kết quả thực hành.
+Vì tôi không có một lần deploy cloud thực tế trong bài này, tôi không tạo một
+lỗi cloud giả để mô tả. Khi chẩn đoán deployment, cách tôi áp dụng là kiểm tra
+build/runtime log, các biến môi trường như `PORT`, `REDIS_URL`,
+`AGENT_API_KEY`, sau đó kiểm tra lần lượt `/health`, `/ready` và xác thực
+của `/ask`.
