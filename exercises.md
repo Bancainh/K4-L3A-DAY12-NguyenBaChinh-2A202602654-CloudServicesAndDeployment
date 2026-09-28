@@ -27,7 +27,6 @@ Ngoài ra, tôi có thể dùng các trường `tokens_in`, `tokens_out` và `co
 
 ---
 
-```md
 ### Câu 3 — Kích thước image (CP2)
 
 Kết quả tôi quan sát được sau khi build image:
@@ -41,6 +40,12 @@ Lệnh tôi sử dụng:
 
 ```powershell
 docker images day12-agent:prod
+```
+
+**Chưa hoàn tất phần thực hành:** chưa build bản 1-stage để so sánh dung lượng
+và giải thích chênh lệch từ số đo thực tế. Máy hiện tại không có Docker;
+số đo multi-stage ở trên là kết quả đã ghi từ lần thực hành trước.
+
 ---
 
 ### Câu 4 — Thứ tự lệnh trong Dockerfile (CP2)
@@ -58,7 +63,9 @@ Với cách sắp xếp này, khi chỉ sửa một ký tự trong `app/main.py`
 
 Nếu đặt `COPY . .` trước `RUN pip install`, chỉ một thay đổi nhỏ trong source code cũng làm layer `COPY` thay đổi. Docker sẽ mất cache cho toàn bộ các layer phía sau, bao gồm `pip install`, nên phải cài lại toàn bộ dependency dù `requirements.txt` không đổi.
 
-**Tôi sẽ xác nhận lại bằng output build thực tế trên máy có Docker và sửa câu này nếu quan sát khác với dự kiến.**
+**Chưa kiểm chứng thực tế:** phần trên là giải thích theo Dockerfile. Cần sửa
+một ký tự trong source, build lại trên máy có Docker và ghi các bước `CACHED`
+cùng các bước chạy lại trước khi coi câu này đã hoàn tất.
 
 ---
 
@@ -125,11 +132,8 @@ Thiết kế tách hai endpoint tránh vấn đề này. `/health` chỉ kiểm 
 
 ### Câu 9 — Stateless (CP4)
 
-**Kết quả thực tế cần bổ sung sau khi chạy:**
-
-```text
-history_length: [DÁN CÁC GIÁ TRỊ QUAN SÁT ĐƯỢC]
-```
+**Chưa có kết quả thực tế:** máy hiện tại không có Docker nên chưa chạy cụm
+3 instance và chưa ghi được chuỗi `history_length`.
 
 Với thiết kế hiện tại, lịch sử hội thoại được lưu trong Redis. Nhiều instance của `ConversationStore` cùng sử dụng Redis nên dù các request đi vào các container khác nhau, chúng vẫn đọc được cùng một lịch sử của `X-User-Id`.
 
@@ -137,18 +141,19 @@ Nếu thay Redis bằng một `dict` Python trong từng container thì mỗi co
 
 Redis đưa state ra khỏi từng process nên các instance có thể scale ngang mà vẫn chia sẻ cùng dữ liệu.
 
-**Tôi sẽ bổ sung chuỗi `history_length` thực tế sau khi chạy `docker compose up --scale agent=3`.**
+**Việc cần làm khi có Docker:** điều chỉnh Compose để các instance không cùng
+chiếm cổng host `8000` (hiện đang map `8000:8000`), thiết lập đường gọi tới các
+instance, chạy 3 instance rồi ghi chuỗi `history_length` với cùng `X-User-Id`.
+Chưa coi phần thực hành này là hoàn thành.
 
 ---
 
 ### Câu 10 — Deploy thật (CP5)
 
-**Chưa điền trước khi deploy để không bịa lỗi hoặc output.**
+**Chưa hoàn thành:** hiện bài sử dụng Local Docker Compose với
+`LOCAL_FALLBACK=true`, chưa deploy lên cloud. Vì vậy chưa có lỗi cloud thực tế
+để mô tả theo yêu cầu của câu này.
 
-Sau khi deploy tôi sẽ ghi lại một lỗi thực tế theo ba phần:
-
-- **Thông báo lỗi:** `[DÁN LỖI THỰC TẾ]`
-- **Cách tìm nguyên nhân:** `[LOG / HEALTH CHECK / CONFIG MÀ TÔI ĐÃ KIỂM TRA]`
-- **Cách sửa:** `[THAY ĐỔI THỰC TẾ TÔI ĐÃ LÀM]`
-
-Ví dụ các loại lỗi tôi sẽ kiểm tra nếu gặp là build Docker thất bại, sai `REDIS_URL`, readiness trả 503, thiếu biến môi trường hoặc service không sử dụng `$PORT` do platform cấp.
+Khi thực hiện cloud deployment, cần ghi lại thông báo lỗi thực sự gặp phải,
+log hoặc cấu hình dùng để tìm nguyên nhân, và thay đổi đã khắc phục lỗi.
+Không dùng lỗi giả định làm kết quả thực hành.
